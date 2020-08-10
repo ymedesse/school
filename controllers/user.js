@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 const User = require("../models/user");
 const { errorHandler } = require("../helpers/dbErrorHandler");
-const { performReadLite: readLiteCart } = require("./Cart");
+const { performReadLite: readLiteCart } = require("./cart");
 const { performReadLite: readLiteCmde } = require("./commande");
 const { getCostRange } = require("./city");
 exports.userById = (req, res, next, id) => {

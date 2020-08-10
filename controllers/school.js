@@ -66,6 +66,7 @@ const performSearching = (req, res, type = "full", next) => {
     limit,
     offset,
     search,
+    status,
     searchInFields = [],
     ...restQuery
   } = query;
@@ -90,9 +91,13 @@ const performSearching = (req, res, type = "full", next) => {
       : "";
   }
 
+  const statusFilter = status ? { status } : {};
+
+  console.log(textFilter);
   let filter = {
     ...textFilter,
     ...restQuery,
+    ...statusFilter,
   };
 
   execSearchPaginate(
@@ -104,7 +109,7 @@ const performSearching = (req, res, type = "full", next) => {
       limit,
       offset,
       searchInFields,
-      select: "slug name phone address mail image",
+      select: "slug name phone address mail image status",
       toSort: type !== "pricesRange",
     },
     (data) => next(data)

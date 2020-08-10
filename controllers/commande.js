@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-console */
-const { Commande } = require("../models/Commande");
+const { Commande } = require("../models/commande");
 const { errorHandler } = require("../helpers/dbErrorHandler");
 const { Product } = require("../models/product");
 const { findLocalAddress } = require("./address");

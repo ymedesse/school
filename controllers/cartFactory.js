@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-console */
 const { Cart } = require("../models/cart");
-const { Commande } = require("../models/Commande");
+const { Commande } = require("../models/commande");
 const { convertStringNumber } = require("../utils");
 const { errorHandler } = require("../helpers/dbErrorHandler");
 const { Product } = require("../models/product");
@@ -322,7 +322,6 @@ exports.factory = (Col, docName = "cart", sale_priceField = "sale_price") => {
         }
         cont.total = total;
         cont.products = products;
-        console.log({ ssss: cont.total, oldProduct });
       }
       cart.contents = contents;
     }
@@ -369,6 +368,7 @@ exports.factory = (Col, docName = "cart", sale_priceField = "sale_price") => {
         products.splice(index, 1);
       }
 
+      
       save(cart, res);
     } else return res.json({ error: "list list invalid" });
   };
@@ -487,7 +487,6 @@ exports.factory = (Col, docName = "cart", sale_priceField = "sale_price") => {
       contents[i].count = contCount;
       contents[i].total = contTotal;
     }
-    console.log({ somme: total });
     cart.total = total;
     cart.count = count;
 

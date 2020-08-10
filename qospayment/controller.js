@@ -14,7 +14,7 @@ exports.payment = async (req, res) => {
   const { amount = "1", phone } = body;
   const away = checkNetworApiFromPhone(phone);
   if (!away) {
-    return res.status(400).json({ errr: " le Numéro mobile est invalide " });
+    return res.status(400).json({ error: " le Numéro mobile est invalide " });
   }
 
   const config = getCurrentConfig(away);
@@ -51,7 +51,7 @@ exports.checkStatus = async (req, res) => {
   const { transref, phone } = req.body;
   const away = checkNetworApiFromPhone(phone);
   if (!away) {
-    return res.status(400).json({ errr: " le Numéro mobile est invalide " });
+    return res.status(400).json({ error: " le Numéro mobile est invalide " });
   }
 
   const config = getCurrentConfig(away);

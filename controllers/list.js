@@ -140,10 +140,6 @@ exports.getFourniture = async (req, res) => {
 exports.getFournitureBySchoolAndClasse = async (req, res) => {
   const { school, classe } = req;
 
-  console.log({
-    "school.id": school._id,
-    "classe.id": classe._id,
-  });
   performFournitureSelection(res, {
     "school.id": school._id,
     "classe.id": classe._id,
@@ -155,6 +151,7 @@ const performFournitureSelection = async (res, filter) => {
     .populate({
       path: "products.product",
       select: "-updateBy -createBy -createdAt -updatedAt -history -schools",
+      match: { status: "publish" },
     })
     .populate({
       path: "classe.id",

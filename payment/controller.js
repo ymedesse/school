@@ -2,7 +2,7 @@
 const { Order } = require("../models/order");
 const { errorHandler } = require("../helpers/dbErrorHandler");
 const { controllerHelper } = require("../utils/simpleControllerFactory");
-const { getContent } = require("./Cart");
+const { getContent } = require("./cart");
 const { sendNewOrderEmail } = require("../mail/controller");
 const { /*create, read, update, remove,*/ byId, list } = controllerHelper(
   Order,

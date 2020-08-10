@@ -108,10 +108,9 @@ const factory = (collectionName = "Cart") => {
     }
 
     const discount =
-      collectionName !== "Commande"
-        ? calculPourcentage(sale_price, price, tva)
+      collectionName === "cart"
+        ? calculDiscountMontant(sale_price, price, tva)
         : 0;
-
     const val = {
       tva,
       price,
@@ -147,7 +146,7 @@ const factory = (collectionName = "Cart") => {
     { timestamps: true }
   );
 
-  cartSchema.virtual("totalDetail").get(function () {
+  cartSchema.virtual("totalDetail").get(function() {
     const totals = this.contents.map((item) => item.totalDetail);
 
     let tva = 0,
@@ -178,7 +177,8 @@ const factory = (collectionName = "Cart") => {
     }
 
     const discount =
-      collectionName === "Cart" ? calculPourcentage(sale, price, tva) : 0;
+      collectionName === "cart" ? calculDiscountMontant(sale, price, tva) : 0;
+
     return {
       tva,
       price: isCommande ? sale : price,
@@ -190,7 +190,7 @@ const factory = (collectionName = "Cart") => {
     };
   });
 
-  cartSchema.virtual("totalAmount").get(function () {
+  cartSchema.virtual("totalAmount").get(function() {
     const { total, shipping = {} } = this;
     const val = (parseInt(total) || 0) + (parseInt(shipping.total) || 0);
     return val;
@@ -216,12 +216,12 @@ const factory = (collectionName = "Cart") => {
 
   //   module.exports = { Cart, shippingDescription, cartSchema };
 
-  const calculPourcentage = (sale, price, tva) => {
+  const calculDiscountMontant = (sale, price, tva) => {
     const sp = parseInt(sale);
     const p = parseInt(price);
     const t = parseInt(tva);
-    const pourc = 100 - ((sp - t) * 100) / (p - t);
-    return Math.round(pourc);
+    const mount = p + t - sp;
+    return Math.round(mount);
   };
 
   return { Cart, cartSchema };

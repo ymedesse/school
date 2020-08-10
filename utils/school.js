@@ -17,14 +17,6 @@ const SchoolSchema = new mongoose.Schema(
       sparse: true,
     },
 
-    status: {
-      type: String,
-      enum: ["draft", "publish"],
-      default: "publish",
-      require: true,
-      index: true,
-    },
-
     name: {
       type: String,
       trim: true,
@@ -59,10 +51,11 @@ const SchoolSchema = new mongoose.Schema(
 
 SchoolSchema.plugin(mongoosePaginate);
 
-SchoolSchema.virtual("discount").get(function() {
+SchoolSchema.virtual("discount").get(function () {
   console.log(this.createBy);
   return this.createBy;
 });
+
 
 SchoolSchema.index({
   slug: "text",

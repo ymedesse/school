@@ -3,7 +3,7 @@ const { Order } = require("../models/order");
 const { errorHandler } = require("../helpers/dbErrorHandler");
 const { controllerHelper } = require("../utils/simpleControllerFactory");
 const { convertStringNumber } = require("../utils");
-const { getContent } = require("./Cart");
+const { getContent } = require("./cart");
 const {
   sendNewOrderEmail,
   sendNewOrderPaymentEmail,
@@ -142,8 +142,17 @@ const formatAddress = async (address = {}) => {
 
 const formatCart = async (cart = {}) => {
   const { _id, totalDetail = {} } = cart;
-  const { tva, price, sale_price, ht, discount, count, total } = totalDetail;
-  return { id: _id, tva, price, sale_price, ht, discount, count, total };
+  const { tva, price, sale_price, ht, discount, count } = totalDetail;
+  return {
+    id: _id,
+    tva: convertStringNumber(tva),
+    price: convertStringNumber(price),
+    sale_price: convertStringNumber(sale_price),
+    ht: convertStringNumber(ht),
+    discount: convertStringNumber(discount),
+    count: convertStringNumber(count),
+    total: sale_price,
+  };
 };
 
 const formatContents = async (contents = []) => {
@@ -185,15 +194,15 @@ const formatProducts = async (products = []) => {
       id: product._id,
       slug: product.slug,
       name: product.name,
-      price: product.price,
-      sale_price: product.sale_price,
-      order_price: product.order_price,
+      price: convertStringNumber(product.price),
+      sale_price: convertStringNumber(product.sale_price),
+      order_price: convertStringNumber(product.order_price),
       isbn: product.isbn,
-      tva: product.tva,
-      discount: product.discount,
+      tva: convertStringNumber(product.tva),
+      discount: convertStringNumber(product.discount),
       assets: product.assets,
-      ht: product.ht,
-      quantity,
+      ht: convertStringNumber(product.ht),
+      quantity: convertStringNumber(quantity),
     });
   }
   return newProducts;
@@ -401,7 +410,6 @@ const performSearching = (req, res, type = "full", next) => {
     ...restQuery,
   };
 
-  console.log({ filter });
   execSearchPaginate(
     res,
     filter,

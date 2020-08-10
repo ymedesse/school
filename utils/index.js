@@ -136,6 +136,14 @@ exports.calculPourcentage = (sale_price, price, tva) => {
   return Math.round(pourc);
 };
 
+exports.calculDiscountMontant = (sale, price, tva) => {
+  const sp = parseInt(sale);
+  const p = parseInt(price);
+  const t = parseInt(tva);
+  const mount = p + t - sp;
+  return Math.round(mount);
+};
+
 exports.arrayFromObject = async (object) => {
   return object ? Object.entries(object).map(([key, item]) => item) : [];
 };
