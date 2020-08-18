@@ -4,28 +4,18 @@ const { routeHelper } = require("../utils/simpleRouteHelper");
 const { paymentValidator } = require("../validator");
 const { requireSignin, isAuth } = require("../controllers/auth");
 
+const { orderById } = require("../controllers/order");
+
 const {
   create,
+  update,
   read,
   remove,
-  update,
-  list,
   paymentById,
-  sendToCaisse,
-  pricesRangesBySearch,
-  listPartialSearch,
-  // listByType,
-  listSearch,
-  removeMany,
+  list,
+  paymentsByOrder,
+  paymentsByUser,
 } = require("../controllers/payment");
-
-const { contentById } = require("../controllers/panier");
-const {
-  caisseByUser,
-  completePayment,
-  validatePanierPayment,
-  verificationNivo1,
-} = require("../controllers/localPayment");
 
 module.exports = routeHelper(
   "payment",
@@ -39,41 +29,19 @@ module.exports = routeHelper(
   paymentValidator,
   router,
   () => {
-    router.post(
-      "/payment/create/:panierId/:userId",
-      requireSignin,
-      isAuth,
-      caisseByUser,
-      contentById,
-      verificationNivo1,
-      completePayment,
-      validatePanierPayment,
-      create
-    );
-
-    router.get("/payment/search/:userId", requireSignin, isAuth, listSearch);
-    router.get(
-      "/payment/prices-ranges/:userId",
-      requireSignin,
-      isAuth,
-      pricesRangesBySearch
-    );
-    router.get(
-      "/payment/partial-search/:userId",
-      requireSignin,
-      isAuth,
-      listPartialSearch
-    );
-
-    router.post(
-      "/payment-transfer/:paymentId/:userId",
-      requireSignin,
-      isAuth,
-      sendToCaisse
-    );
-
+    router.post("/payment/create/:userId", requireSignin, isAuth, create);
     router.get("/payment/:paymentId/:userId", requireSignin, isAuth, read);
+    router.get(
+      "/order/payments/:orderId/:userId",
+      requireSignin,
+      isAuth,
+      paymentsByOrder
+    );
+
+    router.get("/user/payments/:userId", requireSignin, isAuth, paymentsByUser);
+    router.param("orderId", orderById);
   },
+
   undefined,
-  removeMany
+  undefined
 );

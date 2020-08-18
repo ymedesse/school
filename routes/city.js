@@ -3,12 +3,7 @@ const router = express.Router();
 const { routeHelper } = require("../utils/simpleRouteHelper");
 const { cityValidator } = require("../validator");
 
-const {
-  requireSignin,
-  isAdmin,
-  isAuth,
-  isSupUser,
-} = require("../controllers/auth");
+const { requireSignin, isAdmin, isAuth } = require("../controllers/auth");
 
 const {
   create,
@@ -40,7 +35,7 @@ module.exports = routeHelper(
       "/cities/:userId",
       requireSignin,
       isAuth,
-      isSupUser || isAdmin,
+      isAdmin,
       removeMany
     );
     router.get("/cities/search", listSearch);

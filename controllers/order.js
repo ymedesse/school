@@ -4,9 +4,12 @@ const { errorHandler } = require("../helpers/dbErrorHandler");
 const { controllerHelper } = require("../utils/simpleControllerFactory");
 const { convertStringNumber } = require("../utils");
 const { getContent } = require("./cart");
+const { generatePaymentQrCode } = require("./qrCode");
+const { linkPaymentToOrder } = require("./payment");
+
 const {
-  sendNewOrderEmail,
-  sendNewOrderPaymentEmail,
+  // sendNewOrderEmail,
+  // sendNewOrderPaymentEmail,
   sendOrderCanceledEmail,
 } = require("../mail/controller");
 
@@ -25,14 +28,28 @@ exports.submitOrder = async (req, res) => {
   const { payment, type = "cart" } = body;
   const cartCmd = val[`${type}`];
 
-  const { shipping = {}, contents = [] } = cartCmd;
+  const { shipping, contents = [] } = cartCmd;
+
+  if (!cartCmd._id)
+    return res.status(400).json("Aucun panier ou liste à commander trouvé");
+
+  if (!shipping)
+    return res.status(400).json("Vous devez choisir une adresse de livraison");
+
   const address = { ...shipping.address };
 
   shipping.address = await formatAddress(address);
   const contentsFormated = await formatContents(contents);
   const cartFormated = await formatCart(cartCmd);
   const customerFormated = await formatUser(profile);
-  const amountPaid = convertStringNumber(payment.amount);
+
+  let amountPaid = 0;
+
+  const isMomo = payment.method === "momo";
+  if (isMomo) {
+    amountPaid = convertStringNumber(payment.amount);
+  }
+
   const totalAmount = convertStringNumber(cartCmd.totalAmount);
 
   const status = checkStatus(totalAmount, amountPaid);
@@ -40,10 +57,11 @@ exports.submitOrder = async (req, res) => {
     status === "processing" ? { completedDate: Date.now() } : {};
 
   const labelType = type === "cart" ? "achat" : "commande";
+
   const value = {
     user: profile,
     shipping,
-    payment: [payment],
+    payment: isMomo ? [payment] : [],
     contents: contentsFormated,
     [`${type}`]: cartFormated,
     status,
@@ -63,14 +81,33 @@ exports.submitOrder = async (req, res) => {
   saveOrder(
     res,
     order,
-    (newOrder) => {
+    async (newOrder) => {
       req.newOrder = newOrder;
+      await performPayment(profile, payment, newOrder);
       res.json(newOrder);
       performCompleteCartCmd(cartCmd);
       // sendNewOrderEmail(order);
     },
     "order created"
   );
+};
+
+const performPayment = async (profile, payment, order) => {
+  payment.method === "localPayment" &&
+    (await performGeneratePaymntCode(profile, payment, order));
+
+  payment.method === "momo" && (await linkPaymentToOrder(payment, order));
+};
+
+const performGeneratePaymntCode = async (profile, payment, order) => {
+  if (payment.method === "localPayment") {
+    try {
+      await generatePaymentQrCode(payment, order, profile);
+      await populatelite(order);
+    } catch (error) {
+      console.log("geration code", { error });
+    }
+  }
 };
 
 const performCompleteCartCmd = async (cartCmd) => {
@@ -92,9 +129,8 @@ const getCartContent = async (req, res) => {
 };
 
 const checkStatus = (totalAmount, amountPaid) => {
-  console.log({ totalAmount, amountPaid });
   const status =
-    amountPaid === totalAmount
+    amountPaid >= totalAmount
       ? {
           id: "processing",
           label: "en traitement",
@@ -208,25 +244,35 @@ const formatProducts = async (products = []) => {
   return newProducts;
 };
 
-exports.submitInstallmentPayment = (req, res) => {
-  const { order, body, profile } = req;
-  const { amount } = body;
-  order.totalAmount = convertStringNumber(order.totalAmount);
-  const newAmount = convertStringNumber(amount);
-  let amountPaid = convertStringNumber(order.amountPaid) + newAmount;
-  const newStatus = checkStatus(order.totalAmount, amountPaid);
-  order.status = newStatus;
-  if (newStatus === "processing") order.completedDate = Date.now();
+exports.submitInstallmentPayment = async (req, res) => {
+  const { order, profile, body } = req;
 
-  order.amountPaid = amountPaid;
-  order.payment.push(body);
+  let { amount, method } = body.payment;
+
+  const isMomo = method === "momo";
+  if (isMomo) {
+    const newAmount = convertStringNumber(amount);
+    const amountPaid = convertStringNumber(order.amountPaid) + newAmount;
+
+    const newStatus = checkStatus(order.totalAmount, amountPaid);
+    order.status = newStatus;
+    if (newStatus === "processing") order.completedDate = Date.now();
+    order.amountPaid = amountPaid;
+    order.payment.push(body.payment);
+  }
+
   if (!order.updatedBy) order.updatedBy = profile;
 
-  orderSaver(
+  saveOrder(
     res,
     order,
-    "order submit installment payment",
-    sendNewOrderPaymentEmail
+    async (newOrder) => {
+      await performPayment(profile, body.payment, newOrder);
+      await populateFull(order);
+      res.json(order);
+      // sendNewOrderPaymentEmail(order);
+    },
+    "order remove failed"
   );
 };
 
@@ -269,19 +315,15 @@ exports.cancel = async (req, res) => {
 
 const orderSaver = async (
   res,
-  order,
-  errorIndicator,
-  mailSender = async () => {}
+  order
+  // errorIndicator,
+  // mailSender = async () => {}
 ) => {
   saveOrder(
     res,
     order,
     async (newOrder) => {
-      newOrder.populate({
-        path: "user",
-        select: "name email lastName firstName email nomAfficher phone",
-      });
-      await newOrder.execPopulate();
+      await populatelite(newOrder);
       res.json(newOrder);
       // await mailSender(order);
     },
@@ -512,13 +554,7 @@ const execSearchPaginate = (
 
 exports.read = async (req, res) => {
   const { order } = req;
-  order.populate({
-    path: "user",
-    select: "name email lastName firstName email nomAfficher phone imageUrl id",
-  });
-
-  await order.execPopulate();
-
+  await populateFull(order);
   return res.json(order);
 };
 
@@ -572,6 +608,7 @@ const performUpdateStatus = (req, res, field, next) => {
 const saveOrder = (res, order, next, errorComment) => {
   order.save((err, newOrder) => {
     if (err) {
+      console.log({ err });
       return res.status(400).json({
         error: errorHandler(err),
         errorComment,
@@ -610,10 +647,56 @@ exports.listInstallPaymentByUser = async (req, res) => {
   await payment.sort(function(a, b) {
     return new Date(b.date_paid) - new Date(a.date_paid);
   });
-  console.log({ payment });
   res.json({ payment, totalAmount, leftToPay, amoundPaid });
 };
 
+const populateFull = async (order) => {
+  order.populate([
+    {
+      path: "user",
+      select:
+        "name email lastName firstName email nomAfficher phone imageUrl id",
+    },
+    {
+      path: "payment",
+      select: fullPaymentPolpulatePath,
+      populate: {
+        path: "qrCode",
+        select: "code dateExpire amount",
+      },
+    },
+  ]);
+
+  await order.execPopulate();
+  return order;
+};
+
+const populatelite = async (order) => {
+  order.populate([
+    {
+      path: "user",
+      select: "name email lastName firstName email nomAfficher phone",
+    },
+    {
+      path: "payment",
+      select: litePaymentPolpulatePath,
+      populate: {
+        path: "qrCode",
+        select: "code dateExpire amount",
+      },
+    },
+  ]);
+
+  await order.execPopulate();
+  return order;
+};
+
+const litePaymentPolpulatePath =
+  " phone method status qrCode payerData amount method_title transaction_id";
+const fullPaymentPolpulatePath =
+  " phone method status order qrCode payerData amount method_title transaction_id transaction updatedBy";
+
 exports.orderById = byId;
+exports.formatUser = formatUser;
 
 exports.list = list;

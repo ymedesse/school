@@ -3,12 +3,7 @@ const router = express.Router();
 const { routeHelper } = require("../utils/simpleRouteHelper");
 const { productValidator } = require("../validator");
 
-const {
-  requireSignin,
-  isAdmin,
-  isAuth,
-  isSupUser,
-} = require("../controllers/auth");
+const { requireSignin, isAdmin, isAuth } = require("../controllers/auth");
 const { check } = require("../controllers/isbn");
 const {
   create,
@@ -39,7 +34,7 @@ module.exports = routeHelper(
       "/product/create/:userId",
       requireSignin,
       isAuth,
-      isSupUser || isAdmin,
+      isAdmin,
       productValidator,
       check,
       create
@@ -49,11 +44,12 @@ module.exports = routeHelper(
       "/product/:productId/:userId",
       requireSignin,
       isAuth,
-      isSupUser || isAdmin,
+      isAdmin,
       productValidator,
       check,
       update
     );
+
     router.get("/product/:productId", read);
 
     router.get("/products/prices-ranges", pricesRangesBySearch);

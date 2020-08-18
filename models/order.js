@@ -82,54 +82,63 @@ const orderContentItemSchema = new mongoose.Schema(
   { timestamps: true, _id: false, typePojoToMixed: false }
 );
 
-const paymentSchema = new mongoose.Schema(
-  {
-    phone: {
-      type: String,
-      required: false,
-    },
-    method: {
-      type: String,
-      enum: ["local-payment", "momo", "bankTransfer"],
-    },
-    status: {
-      type: Object,
-      enum: [
-        {
-          id: "validated",
-          label: "valide",
-          rank: 1,
-        },
-        {
-          id: "refunded",
-          label: "Remboursée",
-          rank: 0,
-        },
-      ],
-      default: {
-        id: "validated",
-        label: "valide",
-        rank: 1,
-      },
-      require: true,
-      index: true,
-    },
-    date_paid: {
-      type: Date,
-      require: true,
-      index: 1,
-    },
-    amount: {
-      type: Number,
-      require: true,
-      default: 0,
-    },
-    method_title: String,
-    transaction_id: String,
-    transaction: Object,
-  },
-  { timestamps: true, typePojoToMixed: false }
-);
+// const paymentSchema = new mongoose.Schema(
+//   {
+//     phone: {
+//       type: String,
+//       required: false,
+//     },
+//     method: {
+//       type: String,
+//       enum: ["localPayment", "momo", "bankTransfer"],
+//     },
+//     status: {
+//       type: Object,
+//       enum: [
+//         {
+//           id: "validated",
+//           label: "valide",
+//           rank: 1,
+//         },
+//         {
+//           id: "pending",
+//           label: "En attente",
+//           rank: 1,
+//         },
+//         {
+//           id: "refunded",
+//           label: "Remboursée",
+//           rank: 0,
+//         },
+//       ],
+//       default: {
+//         id: "validated",
+//         label: "valide",
+//         rank: 1,
+//       },
+//       require: true,
+//       index: true,
+//     },
+//     date_paid: {
+//       type: Date,
+//       require: true,
+//       index: 1,
+//     },
+//     amount: {
+//       type: Number,
+//       require: true,
+//       default: 0,
+//     },
+//     paymentId: {
+//       type: ObjectId,
+//       ref: "Payment",
+//     },
+//     method_title: String,
+//     transaction_id: String,
+//     transaction: Object,
+//   },
+//   { timestamps: true, typePojoToMixed: false }
+// );
 
 const OrderSchema = new mongoose.Schema(
   {
@@ -259,9 +268,15 @@ const OrderSchema = new mongoose.Schema(
       index: true,
     },
     payment: {
-      type: [paymentSchema],
+      type: [
+        {
+          type: ObjectId,
+          ref: "Payment",
+        },
+      ],
       default: [],
     },
+
     customerData: {
       type: {
         lastName: String,
@@ -324,6 +339,13 @@ OrderSchema.virtual("isCancelled").get(function() {
 OrderSchema.set("toJSON", { virtuals: true });
 
 OrderSchema.plugin(mongoosePaginate);
+
+OrderSchema.virtual("qrCodes", {
+  ref: "QrCode", // The model to use
+  localField: "_id", // Find people where `localField`
+  foreignField: "order", // is equal to `foreignField`
+  justOne: false,
+});
 
 OrderSchema.index({
   number: "text",

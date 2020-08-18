@@ -7,7 +7,6 @@ const {
   requireSignin,
   isAdmin,
   isAuth,
-  isSupUser,
 } = require("../controllers/auth");
 
 const {
@@ -39,7 +38,7 @@ module.exports = routeHelper(
       "/schools/:userId",
       requireSignin,
       isAuth,
-      isSupUser || isAdmin,
+      isAdmin,
       removeMany
     );
     router.get("/schools/search", listSearch);

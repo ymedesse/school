@@ -25,7 +25,7 @@ const shippingDescription = {
   },
   method_title: {
     type: String,
-    required: true,
+    required: [true, "Vous devez définir une méthode de livraison"],
     trim: true,
   },
   total: {

@@ -3,12 +3,7 @@ const router = express.Router();
 const { routeHelper } = require("../utils/simpleRouteHelper");
 const { listValidator } = require("../validator");
 
-const {
-  requireSignin,
-  isAdmin,
-  isAuth,
-  isSupUser,
-} = require("../controllers/auth");
+const { requireSignin, isAdmin, isAuth } = require("../controllers/auth");
 
 const {
   byId: schoolById,
@@ -17,7 +12,6 @@ const {
 
 const { bySlug: classeBySlug } = require("../controllers/classe");
 
-const { check } = require("../controllers/isbn");
 const {
   create,
   read,
@@ -50,9 +44,8 @@ module.exports = routeHelper(
       "/list/create/:userId",
       requireSignin,
       isAuth,
-      isSupUser || isAdmin,
+      isAdmin,
       listValidator,
-      check,
       create
     );
 
@@ -60,9 +53,8 @@ module.exports = routeHelper(
       "/list/:listId/:userId",
       requireSignin,
       isAuth,
-      isSupUser || isAdmin,
+      isAdmin,
       listValidator,
-      check,
       update
     );
 

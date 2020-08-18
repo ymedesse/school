@@ -39,7 +39,7 @@ module.exports = routeHelper(
       "/classes/:userId",
       requireSignin,
       isAuth,
-      isSupUser || isAdmin,
+      isAdmin,
       removeMany
     );
     router.get("/classes/search", listSearch);

@@ -95,7 +95,7 @@ const getInfoUser = async (profile) => {
         isAdmin,
       };
 
-      resolve({ user: val, cart, commande, shippingRange: range });
+      resolve({ user: val, cart, commande, shippingRange: range[0] });
     });
   });
 };

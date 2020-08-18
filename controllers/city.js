@@ -65,8 +65,9 @@ const getCostRange = () => {
           max: { $max: "$cost" },
         },
       },
-      { $project: { _id: 0, minCost: 1, maxCost: 1 } },
-    ]).exec(function (error, resultat) {
+
+      { $project: { _id: 0, max: 1, min: 1 } },
+    ]).exec(function(error, resultat) {
       error && reject(error);
       resolve(resultat);
     });

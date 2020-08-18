@@ -197,4 +197,17 @@ exports.orderStatusValidator = [
     .isEmpty(),
 ];
 
+exports.qrCodeValidator = [
+  check("amount", "Vous devez définir un montant")
+    .not()
+    .isEmpty(),
+];
+
+
+exports.paymentValidator = [
+  check("amount", "Vous devez définir un montant")
+    .not()
+    .isEmpty(),
+];
+
 exports.variantValidator = [];

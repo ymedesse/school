@@ -32,7 +32,7 @@ exports.create = async (req, res) => {
       product: product.depopulate("createBy").depopulate("updateBy"),
     });
     isbn &&
-      isbn !== "" &&
+      ["", null, undefined].indexOf(isbn) !== -1 &&
       memoryIsbnData([{ isbn, model: "product", content: product._id }]);
   });
 };
@@ -443,7 +443,8 @@ const performSetProductsSchool = (products, schoolData, toRemove = false) => {
 
 const currentOdredPopulate = {
   path: "currentCommande",
-  select: "contents.products.id status.id contents.products.quantity customerData",
+  select:
+    "contents.products.id status.id contents.products.quantity customerData",
 };
 
 const currentAchatPopulate = {

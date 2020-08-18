@@ -22,7 +22,9 @@ exports.check = async (req, res, next) => {
   } else {
     const resultat = await checkExistingsFunc([isbn]);
     if (resultat.length > 0) {
-      return res.status(400).json({ error: " ce code isbn existe deja" });
+      return res
+        .status(400)
+        .json({ error: " ce code isbn existe deja", resultat });
     }
     next();
   }
@@ -70,3 +72,5 @@ exports.read = read;
 exports.remove = remove;
 exports.IsbnById = byId;
 exports.list = list;
+
+

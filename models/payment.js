@@ -5,47 +5,112 @@ const mongoosePaginate = require("mongoose-paginate-v2");
 
 const PaymentSchema = new mongoose.Schema(
   {
-    panier: { type: Object, required: true },
-    methods: [Object],
-    payer: {
-      type: Number,
-      required: true,
-    },
-    relicat: {
-      type: Number,
-      default: 0,
-    },
-    ttc: {
-      type: Number,
-      required: true,
-    },
-    ht: {
-      type: Number,
-      required: true,
-    },
-    caisse: Number,
-    remise: {
-      type: Number,
-      default: 0,
-    },
-    localId: String,
-    type: {
+    phone: {
       type: String,
-      enum: ["in", "out"],
-      default: "in",
+      required: [
+        () => {
+          return this.method === "momo";
+        },
+        "user phone is required",
+      ],
     },
+    method: {
+      type: String,
+      enum: ["localPayment", "momo", "bankTransfer"],
+    },
+
     status: {
-      type: String,
-      enum: ["valid", "removed", "canceled"],
-      default: "valid",
+      type: Object,
+      enum: [
+        {
+          id: "validated",
+          label: "valide",
+          rank: 1,
+        },
+        {
+          id: "pending",
+          label: "en attente de paiement",
+          rank: 2,
+        },
+        {
+          id: "refunded",
+          label: "Remboursée",
+          rank: 0,
+        },
+      ],
+      default: {
+        id: "validated",
+        label: "valide",
+        rank: 1,
+      },
+      require: true,
+      index: true,
     },
-    count: {
+
+    order: {
+      type: ObjectId,
+      ref: "Order",
+    },
+
+    qrCode: {
+      type: ObjectId,
+      ref: "QrCode",
+      required: [
+        () => {
+          return this.method === "localPayment";
+        },
+        "qr-code is required",
+      ],
+    },
+
+    confirmation: {
+      type: ObjectId,
+      ref: "Confirmation",
+      required: [
+        () => {
+          return this.method === "localPayment";
+        },
+        "confirmation is required",
+      ],
+    },
+
+    customerData: {
+      type: {
+        lastName: String,
+        firstName: String,
+        phone: String,
+        email: String,
+        id: String,
+      },
+    },
+
+    payerData: {
+      type: {
+        lastName: String,
+        firstName: String,
+        phone: String,
+        email: String,
+        id: String,
+      },
+      required: [
+        () => {
+          return this.method === "localPayment";
+        },
+        "payer data is required",
+      ],
+    },
+
+    amount: {
       type: Number,
+      require: true,
       default: 0,
     },
-    userLocalId: String,
-    createBy: { type: ObjectId, ref: "User", required: true },
-    updateBy: { type: ObjectId, ref: "User", required: true },
+
+    method_title: String,
+    transaction_id: String,
+    transaction: Object,
+    user: { type: ObjectId, ref: "User", required: true },
+    updatedBy: { type: ObjectId, ref: "User", required: true },
   },
   { timestamps: true, typePojoToMixed: false }
 );

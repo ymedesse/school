@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { userById } = require("../controllers/user");
 const { requireSignin, isAdmin, isAuth } = require("../controllers/auth");
-
+const { checkPayment } = require("../controllers/payment");
 const {
   read,
   orderById,
@@ -12,7 +12,7 @@ const {
   getStatusValues,
   submitOrder,
   submitInstallmentPayment,
-  listInstallPaymentByUser,
+  // listInstallPaymentByUser,
   getLocalStatusValues,
   updateLocalStatus,
   updateStatus,
@@ -21,13 +21,12 @@ const {
   listByUser,
 } = require("../controllers/order");
 
-router.post("/order/submit/:userId", requireSignin, isAuth, submitOrder);
-
-router.get(
-  "/order/payments/:orderId/:userId",
+router.post(
+  "/order/submit/:userId",
   requireSignin,
   isAuth,
-  listInstallPaymentByUser
+  checkPayment,
+  submitOrder
 );
 
 router.post("/order/cancel/:orderId/:userId", requireSignin, isAuth, cancel);
@@ -35,6 +34,7 @@ router.post(
   "/order/submit-installment/:orderId/:userId",
   requireSignin,
   isAuth,
+  checkPayment,
   submitInstallmentPayment
 );
 
