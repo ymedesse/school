@@ -5,7 +5,11 @@ const { qrCodeValidator } = require("../validator");
 const { orderById } = require("../controllers/order");
 const { userById } = require("../controllers/user");
 
-const { requireSignin, /*isAdmin,*/ isAuth } = require("../controllers/auth");
+const {
+  requireSignin,
+  /*isAdmin,*/ isAuth,
+  isAdmin,
+} = require("../controllers/auth");
 
 const {
   create,
@@ -16,10 +20,10 @@ const {
 } = require("../controllers/qrCode");
 
 module.exports = routeHelper(
-  "qrCode",
-  "qrCodes",
+  "qrcode",
+  "qrcodes",
   undefined,
-  read,
+  undefined,
   undefined,
   undefined,
   list,
@@ -34,6 +38,8 @@ module.exports = routeHelper(
       qrCodeValidator,
       create
     );
+
+    router.get("/qrcode/:code/:userId", requireSignin, isAuth, isAdmin, read);
 
     router.get("/qrCodes/", list);
     router.param("orderId", orderById);
