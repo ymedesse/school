@@ -5,13 +5,21 @@ const { controllerHelper } = require("../utils/simpleControllerFactory");
 const { bulkUpdateModelValues } = require("../utils");
 const { checkBackupCustomer } = require("./wooCustomer");
 
-// const { convertNumberFieds } = require("../utils/performProduct");
-
 const { /*create, read, update, remove,*/ byId, list } = controllerHelper(
   Order,
   "order",
   true
 );
+
+const options = {
+  // "fullDocument": "updateLookup"
+};
+
+const changeStream = Order.watch(options);
+changeStream.on("change", (change) => {
+  // const { documentKey } = change;
+  console.log({ change });
+});
 
 const directSycronization = async (req, res, next) => {
   const { profile } = req;
@@ -302,7 +310,7 @@ const performSearching = (req, res, type = "full", next) => {
     ...datesFilter,
     ...restQuery,
   };
-  
+
   execSearchPaginate(
     res,
     filter,

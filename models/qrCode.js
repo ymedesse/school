@@ -24,6 +24,10 @@ const QrCodeSchema = new mongoose.Schema(
           label: "valide",
         },
         {
+          id: "used",
+          label: "utilisé",
+        },
+        {
           id: "expired",
           label: "expiré",
         },

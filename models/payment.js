@@ -47,6 +47,8 @@ const PaymentSchema = new mongoose.Schema(
       index: true,
     },
 
+    datePaid: Date,
+
     order: {
       type: ObjectId,
       ref: "Order",
@@ -61,6 +63,8 @@ const PaymentSchema = new mongoose.Schema(
         },
         "qr-code is required",
       ],
+      unique: true,
+      sparse: true,
     },
 
     confirmation: {
@@ -90,8 +94,8 @@ const PaymentSchema = new mongoose.Schema(
         firstName: String,
         phone: String,
         email: String,
-        id: String,
       },
+
       required: [
         () => {
           return this.method === "localPayment";
@@ -110,6 +114,7 @@ const PaymentSchema = new mongoose.Schema(
     transaction_id: String,
     transaction: Object,
     user: { type: ObjectId, ref: "User", required: true },
+    cashier: { type: ObjectId, ref: "User", required: false },
     updatedBy: { type: ObjectId, ref: "User", required: true },
   },
   { timestamps: true, typePojoToMixed: false }

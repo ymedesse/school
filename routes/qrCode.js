@@ -19,6 +19,8 @@ const {
   qrCodeById,
 } = require("../controllers/qrCode");
 
+const { setSimpleNewCodeToOrderPayment } = require("../controllers/payment");
+
 module.exports = routeHelper(
   "qrcode",
   "qrcodes",
@@ -36,7 +38,8 @@ module.exports = routeHelper(
       requireSignin,
       isAuth,
       qrCodeValidator,
-      create
+      create,
+      setSimpleNewCodeToOrderPayment
     );
 
     router.get("/qrcode/:code/:userId", requireSignin, isAuth, isAdmin, read);

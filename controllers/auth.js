@@ -233,6 +233,16 @@ exports.isAdmin = (req, res, next) => {
   next();
 };
 
+exports.isCasher = (req, res, next) => {
+  const { profile } = req;
+  if (!profile.isCasher && !profile.supUser) {
+    return res.status(403).json({
+      error: "Droit d'accès caisse! Accès refusé",
+    });
+  }
+  next();
+};
+
 exports.isSupUser = (req, res, next) => {
   if (req.profile.supUser !== true) {
     return res.status(403).json({
@@ -321,10 +331,6 @@ const rejectErros = (res, errors) => {
   const firstError = errors.array()[0].msg;
   return res.status(400).json({ error: firstError });
 };
-
-
-
-
 
 const isValid = (val) => (val === "" || !val ? false : true);
 

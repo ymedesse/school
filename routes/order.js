@@ -3,6 +3,8 @@ const router = express.Router();
 const { userById } = require("../controllers/user");
 const { requireSignin, isAdmin, isAuth } = require("../controllers/auth");
 const { checkPayment } = require("../controllers/payment");
+const { settingList } = require("../controllers/setting");
+
 const {
   read,
   orderById,
@@ -25,6 +27,7 @@ router.post(
   "/order/submit/:userId",
   requireSignin,
   isAuth,
+  settingList,
   checkPayment,
   submitOrder
 );

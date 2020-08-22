@@ -7,6 +7,7 @@ const IsbnSchema = new mongoose.Schema(
       type: String,
       trim: true,
       unique: true,
+      sparse: true,
       required: true,
       maxlength: 254,
     },

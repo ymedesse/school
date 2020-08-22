@@ -4,6 +4,7 @@ const { errorHandler } = require("../helpers/dbErrorHandler");
 const { performReadLite: readLiteCart } = require("./cart");
 const { performReadLite: readLiteCmde } = require("./commande");
 const { getCostRange } = require("./city");
+
 exports.userById = (req, res, next, id) => {
   User.findById(id).exec((err, user) => {
     if (err || !user) {
@@ -11,6 +12,7 @@ exports.userById = (req, res, next, id) => {
         error: "User not found",
       });
     }
+
     req.profile = user;
     next();
   });

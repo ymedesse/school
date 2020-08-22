@@ -307,9 +307,24 @@ const OrderSchema = new mongoose.Schema(
       required: true,
       default: this.updateBy,
     },
+    expireAt: {
+      type: Date,
+      required: true,
+      default: function() {
+        // 60 seconds from now
+        console.log(" exoitre *****", this);
+        return new Date(Date.now() + 60 * 60 * 24);
+      },
+    },
   },
   { timestamps: true, typePojoToMixed: false }
 );
+
+OrderSchema.index(
+  { expireAt: 1 },
+  { expireAfterSeconds: 0, partialFilterExpression: { "status.id": "pending" } }
+);
+
 OrderSchema.plugin(autoIncrement.plugin, {
   model: "Order",
   field: "id",

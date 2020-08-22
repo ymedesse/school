@@ -35,7 +35,6 @@ exports.payment = async (req, res) => {
   try {
     let result = await qosRequest({ config, body: data, tooken, controller });
     result = await result.json();
-    console.log(result);
     res.json(result);
   } catch (error) {
     console.log("error", error);
@@ -70,13 +69,18 @@ const checkStatus = async (req, res) => {
       controller,
       date_paid,
     });
-    
+
     result = await result.json();
-    const payment = await savePayment(profile, result, {
-      phone,
-      amount,
-      method_title,
-    });
+    const { responsecode } = result;
+    let payment;
+
+    if (responsecode === "00") {
+      payment = await savePayment(profile, result, {
+        phone,
+        amount,
+        method_title,
+      });
+    }
 
     res.json({ ...result, payment });
   } catch (error) {

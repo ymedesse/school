@@ -39,6 +39,7 @@ exports.controllerHelper = (
     Collection.findOne({ [`${idField}`]: id }).exec((err, docValue) => {
       if (err | !docValue) {
         return res.status(400).json({
+          code: "-1",
           error: `${docName} not found`,
         });
       }

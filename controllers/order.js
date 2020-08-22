@@ -5,7 +5,10 @@ const { controllerHelper } = require("../utils/simpleControllerFactory");
 const { convertStringNumber } = require("../utils");
 const { getContent } = require("./cart");
 const { generatePaymentQrCode } = require("./qrCode");
-const { linkPaymentToOrder } = require("./payment");
+const { linkPaymentToOrder, performSetOrderAndPayment } = require("./payment");
+const { setObjectArray } = require("../utils");
+
+const { ORDER_TIME_LIMIT_CODE } = require("../constants");
 
 const {
   // sendNewOrderEmail,
@@ -21,7 +24,7 @@ const { /*create, read, update, remove,*/ byId, list } = controllerHelper(
 );
 
 exports.submitOrder = async (req, res) => {
-  const { profile, body } = req;
+  const { profile, body, settings } = req;
   const val = await getCartContent(req, res);
   if (!val) return res.status(400).json("une erreur s'est produite");
 
@@ -57,6 +60,11 @@ exports.submitOrder = async (req, res) => {
     status === "processing" ? { completedDate: Date.now() } : {};
 
   const labelType = type === "cart" ? "achat" : "commande";
+  const limitDays =
+    (settings.find((item) => item.code === ORDER_TIME_LIMIT_CODE) || {})
+      .value || 1;
+
+  const expireAt = new Date(Date.now() + limitDays * 24 * 60 * 60 * 1000);
 
   const value = {
     user: profile,
@@ -72,6 +80,7 @@ exports.submitOrder = async (req, res) => {
     createdBy: profile,
     count: cartCmd.count,
     type: labelType,
+    expireAt,
     ...completed,
   };
 
@@ -92,8 +101,14 @@ exports.submitOrder = async (req, res) => {
   );
 };
 
-const performPayment = async (profile, payment, order) => {
+const performPayment = async (
+  profile,
+  payment,
+  order,
+  generateNewCode = true
+) => {
   payment.method === "localPayment" &&
+    generateNewCode &&
     (await performGeneratePaymntCode(profile, payment, order));
 
   payment.method === "momo" && (await linkPaymentToOrder(payment, order));
@@ -102,7 +117,15 @@ const performPayment = async (profile, payment, order) => {
 const performGeneratePaymntCode = async (profile, payment, order) => {
   if (payment.method === "localPayment") {
     try {
-      await generatePaymentQrCode(payment, order, profile);
+      const qrCode = await generatePaymentQrCode(payment, order, profile);
+      const {
+        order: newOrder,
+        payment: newPayment,
+      } = await performSetOrderAndPayment(payment, order, profile, qrCode);
+
+      order = newOrder;
+      payment = newPayment;
+
       await populatelite(order);
     } catch (error) {
       console.log("geration code", { error });
@@ -130,7 +153,7 @@ const getCartContent = async (req, res) => {
 
 const checkStatus = (totalAmount, amountPaid) => {
   const status =
-    amountPaid >= totalAmount
+    amountPaid > 0 //= totalAmount
       ? {
           id: "processing",
           label: "en traitement",
@@ -245,29 +268,24 @@ const formatProducts = async (products = []) => {
 };
 
 exports.submitInstallmentPayment = async (req, res) => {
-  const { order, profile, body } = req;
+  let { order, profile, body } = req;
 
-  let { amount, method } = body.payment;
+  let { payment } = body;
 
-  const isMomo = method === "momo";
-  if (isMomo) {
-    const newAmount = convertStringNumber(amount);
-    const amountPaid = convertStringNumber(order.amountPaid) + newAmount;
+  if (!payment) sendError(res, " payment is required");
+  if (payment && !payment.amount)
+    sendError(res, " payment amount  is required");
+  if (payment && !payment.method)
+    sendError(res, " payment methode  is required");
 
-    const newStatus = checkStatus(order.totalAmount, amountPaid);
-    order.status = newStatus;
-    if (newStatus === "processing") order.completedDate = Date.now();
-    order.amountPaid = amountPaid;
-    order.payment.push(body.payment);
-  }
-
-  if (!order.updatedBy) order.updatedBy = profile;
+  await performGeneratePaymntCode(profile, payment, order);
+  order = await inputPaymentToOrder(profile, payment, order);
 
   saveOrder(
     res,
     order,
     async (newOrder) => {
-      await performPayment(profile, body.payment, newOrder);
+      await performPayment(profile, payment, newOrder, false);
       await populateFull(order);
       res.json(order);
       // sendNewOrderPaymentEmail(order);
@@ -275,6 +293,56 @@ exports.submitInstallmentPayment = async (req, res) => {
     "order remove failed"
   );
 };
+
+const impactQrPaymentToOrder = (profile, payment, order) =>
+  new Promise(async (resolve, reject) => {
+    let sorder = await inputPaymentToOrder(profile, payment, order);
+
+    sorder.save((err, newOrder) => {
+      if (err) {
+        console.log("cannot link qrcode payment to order");
+        reject(err);
+      } else {
+        resolve(newOrder);
+      }
+    });
+  });
+
+const inputPaymentToOrder = async (profile, payment, order) => {
+  let { amount, method, status = {} } = payment;
+
+  const isMomo = method === "momo";
+  const isQrCodePayment =
+    method === "localPayment" && status.id === "validated";
+
+  if (isMomo || isQrCodePayment) {
+    const newAmount = convertStringNumber(amount);
+    const amountPaid = convertStringNumber(order.amountPaid) + newAmount;
+
+    const newStatus = checkStatus(order.totalAmount, amountPaid);
+    order.status = newStatus;
+    if (newStatus === "processing") order.completedDate = Date.now();
+    order.amountPaid = amountPaid;
+    order.payment.push(payment);
+    order.payment = setObjectArray(order.payment);
+  }
+
+  order.updatedBy = profile;
+  return order;
+};
+exports.impactValidQrPaymentToOrder = async (req, res, next) => {
+  const { profile, payment, order } = req;
+
+  try {
+    const newOrder = await impactQrPaymentToOrder(profile, payment, order);
+    req.order = newOrder;
+    next();
+  } catch (error) {
+    res.status(400).json({ error: errorHandler(error) });
+  }
+};
+
+exports.impactQrPaymentToOrder = impactQrPaymentToOrder;
 
 exports.remove = async (req, res) => {
   const { profile, order } = req;
@@ -700,3 +768,9 @@ exports.orderById = byId;
 exports.formatUser = formatUser;
 
 exports.list = list;
+
+const sendError = (res, message) => {
+  return res.status(400).json({
+    error: message,
+  });
+};

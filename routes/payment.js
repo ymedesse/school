@@ -2,9 +2,18 @@ const express = require("express");
 const router = express.Router();
 const { routeHelper } = require("../utils/simpleRouteHelper");
 const { paymentValidator } = require("../validator");
-const { requireSignin, isAuth } = require("../controllers/auth");
+const {
+  requireSignin,
+  isAuth,
+  isCasher,
+  isAdmin,
+} = require("../controllers/auth");
 
-const { orderById } = require("../controllers/order");
+const {
+  orderById,
+  impactValidQrPaymentToOrder,
+} = require("../controllers/order");
+const { qrCodeById } = require("../controllers/qrCode");
 
 const {
   create,
@@ -15,6 +24,8 @@ const {
   list,
   paymentsByOrder,
   paymentsByUser,
+  submitFromQrcode,
+  finalisePaymentFromCode,
 } = require("../controllers/payment");
 
 module.exports = routeHelper(
@@ -31,6 +42,16 @@ module.exports = routeHelper(
   () => {
     router.post("/payment/create/:userId", requireSignin, isAuth, create);
     router.get("/payment/:paymentId/:userId", requireSignin, isAuth, read);
+    router.post(
+      "/payment-by-qrcode/:qrcodeId/:orderId/:userId",
+      requireSignin,
+      isAuth,
+      isAdmin,
+      isCasher,
+      submitFromQrcode,
+      impactValidQrPaymentToOrder,
+      finalisePaymentFromCode
+    );
     router.get(
       "/order/payments/:orderId/:userId",
       requireSignin,
@@ -40,6 +61,7 @@ module.exports = routeHelper(
 
     router.get("/user/payments/:userId", requireSignin, isAuth, paymentsByUser);
     router.param("orderId", orderById);
+    router.param("qrcodeId", qrCodeById);
   },
 
   undefined,
