@@ -11,16 +11,6 @@ const { /*create, read, update, remove,*/ byId, list } = controllerHelper(
   true
 );
 
-const options = {
-  // "fullDocument": "updateLookup"
-};
-
-const changeStream = Order.watch(options);
-changeStream.on("change", (change) => {
-  // const { documentKey } = change;
-  console.log({ change });
-});
-
 const directSycronization = async (req, res, next) => {
   const { profile } = req;
   const { orders } = req.body;
@@ -37,6 +27,7 @@ const directSycronization = async (req, res, next) => {
         profile
       );
     });
+    
   } else {
     !next && res.status(400).json({ error: "empty value", file: "order" });
     next && next({ error: "empty value" });

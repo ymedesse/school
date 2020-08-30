@@ -46,9 +46,9 @@ exports.create = async (req, res) => {
 
       const { originalFilename, size } = singleImg;
       const pname = name && name[i] ? name[i] : originalFilename;
-      if (size >= 1000000) {
+      if (size >= 5000000) {
         res.status(401).json({
-          error: "File is Less then 1 MB",
+          error: "La taille du fichier doit être inférieur à 5 MB",
         });
       }
 

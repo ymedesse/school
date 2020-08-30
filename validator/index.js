@@ -203,11 +203,12 @@ exports.qrCodeValidator = [
     .isEmpty(),
 ];
 
-
 exports.paymentValidator = [
   check("amount", "Vous devez définir un montant")
     .not()
     .isEmpty(),
 ];
+
+exports.whishValidator = [];
 
 exports.variantValidator = [];

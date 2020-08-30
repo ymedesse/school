@@ -34,6 +34,7 @@ const qosRoute = require("./qospayment/route");
 const mailRoute = require("./mail/routes");
 const qrCodeRoute = require("./routes/qrCode");
 const paymentRoute = require("./routes/payment");
+const wishedRoute = require("./routes/wished");
 
 const port = process.env.PORT || 8000;
 
@@ -90,6 +91,7 @@ app.use("/api", mailRoute);
 app.use("/api", fileRoute);
 app.use("/api", qrCodeRoute);
 app.use("/api", paymentRoute);
+app.use("/api", wishedRoute);
 
 server.listen(port, () => {
   console.log(`Server is runing on port ${port};`);

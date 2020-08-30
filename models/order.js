@@ -311,8 +311,6 @@ const OrderSchema = new mongoose.Schema(
       type: Date,
       required: true,
       default: function() {
-        // 60 seconds from now
-        console.log(" exoitre *****", this);
         return new Date(Date.now() + 60 * 60 * 24);
       },
     },
